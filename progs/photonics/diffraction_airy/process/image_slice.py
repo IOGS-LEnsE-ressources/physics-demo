@@ -20,9 +20,6 @@ Created on 02/jun/2024
 """
 
 import numpy as np
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QPushButton, QGridLayout
-from PyQt6.QtCore import Qt
-
 
 class ImageSlice:
     """

@@ -26,7 +26,6 @@ import numpy as np
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget
 from PyQt6.QtGui import QIcon
 import cv2
-from scipy.special import j1
 
 from gui.simple_widget import SimpleWidget
 from gui.title_widget import TitleWidget
@@ -35,6 +34,7 @@ from gui.graph_widget import GraphWidget
 from gui.image_widget import ImageWidget
 from gui.params_widget import ParamsWidget
 from process.image_slice import ImageSlice
+from process.airy import AiryDisc
 
 
 # -------------------------------
@@ -62,6 +62,7 @@ class MainWindow(QMainWindow):
         self.simulation = False     
         
         self.image_slice = ImageSlice()
+        self.airy_simulation = AiryDisc()
         
         # Define Window title
         self.setWindowTitle("LEnsE - Demo of Airy Disc")
@@ -159,13 +160,10 @@ class MainWindow(QMainWindow):
             min_ax = (-(self.image_width)+self.maxIntensityInd+self.origin)/2*pixw*1e-6
             max_ax = ((self.image_width)+self.maxIntensityInd+self.origin)/2*pixw*1e-6
             x_axis = np.linspace(min_ax, max_ax, self.image_width)
-            # Process Airy Disc calculation
-            k = diam*1e-3/(dist*1e-2*wale*1e-9)
-            J = (2*j1(np.pi*k*x_axis)/(np.pi*k*x_axis))**2
+            
             # Arbitrary intensity - To change
-            simulated_disc = 255*J
+            simulated_disc = 255*self.airy_simulation.get_j(x_axis, diam, dist, wale)
             y_list.append(simulated_disc)
-            print('simu')
         self.graph_area.set_data(x_lin, y_list)
         
         
@@ -200,9 +198,6 @@ class MainWindow(QMainWindow):
     def params_changed(self, event):
         try:
             if event == 'sliders':
-                print('Slide test')
-                if self.simulation:
-                    print('Simu OK')
                 self.refresh_graph()
                 
             elif event == 'params': # all the parameters are good

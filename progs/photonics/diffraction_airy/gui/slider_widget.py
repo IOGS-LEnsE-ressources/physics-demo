@@ -200,7 +200,6 @@ class SliderWidget(QWidget):
             if self.integer:
                 self.real_value = int(self.real_value)
             self.set_value(self.real_value)
-            print(f'V={value} / RV={self.real_value}')
         
         '''
         # Test if value is between min and max
@@ -266,6 +265,12 @@ class SliderWidget(QWidget):
             return int(self.slider.value() / self.ratio_slider)
         else:
             return self.slider.value() / self.ratio_slider
+    
+    def get_user_value(self):
+        if self.integer:
+            return int(float(self.user_value.text()))
+        else:
+            return float(self.user_value.text())
 
     def set_value(self, value):
         self.real_value = value

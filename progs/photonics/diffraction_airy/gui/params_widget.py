@@ -108,32 +108,38 @@ class ParamsWidget(QWidget):
     def data_updated(self, event):
         params_count = 0
         try:
-            if self.distance.update_value():
+            if self.distance.is_value():
                 params_count += 1
-                distance = self.distance.get_real_value()
+                distance = self.distance.get_user_value()
                 self.distance.set_min_max_slider(distance*0.9, distance*1.1)
                 self.distance.set_value(distance)
                 self.distance.set_slider_enabled(True)
             if self.diameter.update_value():
                 params_count += 1
-                diameter = self.diameter.get_real_value()
+                diameter = self.diameter.get_user_value()
                 self.diameter.set_min_max_slider(diameter*0.9, diameter*1.1)
                 self.diameter.set_value(diameter)
                 self.diameter.set_slider_enabled(True) 
             if self.wavelength.update_value():
                 params_count += 1
-                wavelength = self.wavelength.get_real_value()
+                wavelength = self.wavelength.get_user_value()
                 self.wavelength.set_min_max_slider(wavelength*0.9, wavelength*1.1)
                 self.wavelength.set_value(wavelength)
                 self.wavelength.set_slider_enabled(True)
             if self.pixels_size.update_value():
                 params_count += 1
-                pixels_size = self.pixels_size.get_real_value()
+                pixels_size = self.pixels_size.get_user_value()
                 self.pixels_size.set_min_max_slider(pixels_size*0.9, pixels_size*1.1)
                 self.pixels_size.set_value(pixels_size)
                 self.pixels_size.set_slider_enabled(True)
             if params_count == 4:
                 self.changed.emit('params')
+            else:
+                self.distance.set_slider_enabled(False)
+                self.diameter.set_slider_enabled(False) 
+                self.wavelength.set_slider_enabled(False)
+                self.pixels_size.set_slider_enabled(False)
+                
         except Exception as e:
             print("Exception - data_updated: " + str(e) + "")
     
