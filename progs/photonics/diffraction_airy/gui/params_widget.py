@@ -23,6 +23,7 @@ Created on 01/jun/2024
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QPushButton, QGridLayout
 from PyQt6.QtCore import Qt, pyqtSignal
 from gui.slider_widget import SliderWidget
+from gui.v_slider_widget import VSliderWidget
 
 
 class ParamsWidget(QWidget):
@@ -86,9 +87,23 @@ class ParamsWidget(QWidget):
         self.update_bt.clicked.connect(self.data_updated)
         self.update_layout.addWidget(self.pixels_size, 0, 0)
         self.update_layout.addWidget(self.update_bt, 0, 1)
-        
         self.layout.addWidget(self.update_widget, 3, 0) 
+        
+        # Simulation Intensity
+        self.intensity = VSliderWidget(name='Intensity', integer=True)
+        self.intensity.set_slider_enabled(False)
+        self.intensity.set_min_max_slider(1,255)    
+        self.intensity.changed.connect(self.params_changed)    
+        self.layout.addWidget(self.intensity, 0, 1, 4, 1) 
     
+    def set_intensity_enabled(self, value):
+        self.intensity.slider.setEnabled(value)
+    
+    def set_intensity(self, value):
+        self.intensity.set_value(value)
+   
+    def get_intensity(self) -> int:
+        return self.intensity.get_real_value()
     
     def get_data(self):
         dist = self.distance.get_real_value()

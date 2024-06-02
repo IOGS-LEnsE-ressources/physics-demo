@@ -46,7 +46,6 @@ class ImageWidget(WidgetImageDisplay):
     def set_image_from_array(self, pixels: np.ndarray) -> None:
         super().set_image_from_array(pixels)
         self.image_copy = pixels.copy()
-        print(self.image_copy.shape)
     
     def init_image(self) -> None:
         """
@@ -60,7 +59,6 @@ class ImageWidget(WidgetImageDisplay):
         Draw an horizontal line on the picture
         """        
         try:
-            self.init_image()
             self.image[position-width:position+width,:] = gray_color
             self.resizeEvent(None)
         

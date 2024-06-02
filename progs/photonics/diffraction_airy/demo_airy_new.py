@@ -27,7 +27,6 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget
 from PyQt6.QtGui import QIcon
 import cv2
 
-from gui.simple_widget import SimpleWidget
 from gui.title_widget import TitleWidget
 from gui.open_widget import OpenFileWidget
 from gui.graph_widget import GraphWidget
@@ -85,24 +84,23 @@ class MainWindow(QMainWindow):
         
         self.main_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.main_widget)
-        
+                
         # Title Area
         self.title_area =  TitleWidget(title='Airy Disc / Demonstration')
+
+        # Slice Parameters
+        self.slice_params = SliceParamsWidget(title='Menu')
+        self.slice_params.set_graph_position_enabled(False)
+        self.open_file_area = OpenFileWidget(title='Open File')
+        self.open_file_area.opened.connect(self.init_image)
         
         # Image Area
         self.image_area = ImageWidget(title='Image')
         self.graph_area = GraphWidget(title='Graphe')
         self.graph_area.set_x_label('Position in pixel')
-        self.camera_area = SimpleWidget(title='Camera')
+        self.camera_area = QWidget()
         self.params_area = ParamsWidget(title='Params')
-        self.params_area.changed.connect(self.params_changed)
-
-        # Central Menu
-        self.slice_params = SliceParamsWidget(title='Menu')
-        self.slice_params.changed.connect(self.params_changed)
-        self.slice_params.set_graph_position_enabled(False)
-        self.open_file_area = OpenFileWidget(title='Open File')
-        self.open_file_area.opened.connect(self.init_image)
+        self.params_area.set_intensity(255)
 
         # Include graphical elements in the window application
         self.main_layout.addWidget(self.title_area, 0, 0, 1, 3)
@@ -114,6 +112,8 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.params_area, 2, 2)
         
         self.init_image('')
+        self.params_area.changed.connect(self.params_changed)
+        self.slice_params.changed.connect(self.params_changed)
 
     def open_image(self, imageName):
         self.image = cv2.imread(imageName, cv2.IMREAD_GRAYSCALE)
@@ -142,16 +142,14 @@ class MainWindow(QMainWindow):
         self.slice_params.set_graph_position_min_max(-self.image_width//2, +self.image_width//2)
         self.slice_params.set_graph_position(0)
         
-        
-        
         self.refresh_image()
         self.refresh_graph()
     
     def refresh_image(self):
         try:
             max_ind, mean_size, g_pos = self.slice_params.get_data()
-            # self.slice_params.set_mean_size(mean_size)
-            self.image_area.draw_h_line(max_ind-1, width=5)
+            self.image_area.init_image()
+            self.image_area.draw_h_line(max_ind-1, width=5, gray_color=200)
             self.image_area.draw_h_line(max_ind-1-mean_size)
             self.image_area.draw_h_line(max_ind-1+mean_size)
         except Exception as e:
@@ -172,13 +170,12 @@ class MainWindow(QMainWindow):
         if self.simulation :
             dist, diam, wale, pixw = self.params_area.get_data()
             # X Axis
-            self.maxIntensityInd = 0
-            min_ax = (-(self.image_width)+self.maxIntensityInd-g_pos)/2*pixw*1e-6
-            max_ax = ((self.image_width)+self.maxIntensityInd-g_pos)/2*pixw*1e-6
+            min_ax = (-(self.image_width)-g_pos)/2*pixw*1e-6
+            max_ax = ((self.image_width)-g_pos)/2*pixw*1e-6
             x_axis = np.linspace(min_ax, max_ax, self.image_width)
-            
-            # Arbitrary intensity - To change
-            simulated_disc = 255*self.airy_simulation.get_j(x_axis, diam, dist, wale)
+            # Y Axis
+            intensity = self.params_area.get_intensity()
+            simulated_disc = intensity*self.airy_simulation.get_j(x_axis, diam, dist, wale)
             x_axis_d = x_axis*1e6 # Displayed axis
             y_list.append(simulated_disc)
             self.graph_area.set_x_label('Position in um')
@@ -190,11 +187,10 @@ class MainWindow(QMainWindow):
             if event == 'params': # all the parameters are good
                 self.simulation = True
                 self.slice_params.set_graph_position_enabled(True)
-            print(event)
+                self.params_area.set_intensity_enabled(True)
             if event == 'slider:Position':
                 max_ind, mean_size, g_pos = self.slice_params.get_data()
                 delta_x = min(max_ind ,(self.image_height - max_ind))
-                print(f'D_x = {delta_x}')
                 self.slice_params.set_mean_size_min_max(0, delta_x-1)
                 self.slice_params.set_mean_size(mean_size)
             self.refresh_image()
