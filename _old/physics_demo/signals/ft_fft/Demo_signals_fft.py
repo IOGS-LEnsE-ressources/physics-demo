@@ -9,8 +9,8 @@ Created on 11/mar/2023
 @author: julien.villemejane
 """
 
-from PyQt5.QtWidgets import QMainWindow, QApplication
-from PyQt5.uic import loadUi
+from PyQt6.QtWidgets import QMainWindow, QApplication
+from PyQt6.uic import loadUi
 
 import numpy as np
 from pyqtgraph import PlotWidget, plot, mkPen
@@ -142,4 +142,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     main = MainWindow()
     main.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
