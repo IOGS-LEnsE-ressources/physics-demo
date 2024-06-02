@@ -42,6 +42,26 @@ class ImageWidget(WidgetImageDisplay):
         self.title = title
         self.background_color = background_color
         self.text_color = text_color
+        self.image_copy = self.image
+    
+    def init_image(self) -> None:
+        """
+        Reinit the image to the original one - without lines
+        """
+        self.image = self.image_copy
+        self.resizeEvent(None)
+    
+    def draw_h_line(self, position: int, gray_color:int = 120, width: int = 2) -> None:
+        """
+        Draw an horizontal line on the picture
+        """        
+        try:
+            self.image[position-width:position+width,:] = gray_color
+            self.resizeEvent(None)
+        
+        except Exception as e:
+            print("Exception - paint_h_line: " + str(e) + "")
+        
         
 #--------------
 # Example to test the Simple_Widget class
@@ -59,9 +79,7 @@ if __name__ == '__main__':
             self.setGeometry(50, 50, 1000, 700)    
                     
             # Widget to test
-            self.main_area = TitleWidget(title='Main Area', 
-                        background_color='white',
-                        text_color='red')
+            self.main_area = ImageWidget(title='Main Area')
             self.setCentralWidget(self.main_area)
     
     app = QApplication(sys.argv)

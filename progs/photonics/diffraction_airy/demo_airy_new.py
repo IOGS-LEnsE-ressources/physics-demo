@@ -26,12 +26,15 @@ import numpy as np
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget
 from PyQt6.QtGui import QIcon
 import cv2
+from scipy.special import j1
 
 from gui.simple_widget import SimpleWidget
 from gui.title_widget import TitleWidget
 from gui.open_widget import OpenFileWidget
 from gui.graph_widget import GraphWidget
 from gui.image_widget import ImageWidget
+from gui.params_widget import ParamsWidget
+from process.image_slice import ImageSlice
 
 
 # -------------------------------
@@ -52,6 +55,13 @@ class MainWindow(QMainWindow):
         
         self.image_name = ''
         self.image = None
+        self.image_width = 0
+        self.image_height = 0
+        # If data from optical experiments are given, simulation of
+        # Airy disc can be added
+        self.simulation = False     
+        
+        self.image_slice = ImageSlice()
         
         # Define Window title
         self.setWindowTitle("LEnsE - Demo of Airy Disc")
@@ -80,16 +90,11 @@ class MainWindow(QMainWindow):
         # Image Area
         self.image_area = ImageWidget(title='Image')
         self.graph_area = GraphWidget(title='Graphe')
-        x_lin = np.linspace(0, 100, 101)
-        y1_lin = 50*(np.sin(x_lin)+1.5)
-        y2_lin = 20*(np.sin(x_lin)+2.5)
-        self.graph_area.set_data(x_lin, [y1_lin, y2_lin])
         self.camera_area = SimpleWidget(title='Camera', 
                     background_color='gray',
                     text_color='black')
-        self.params_area = SimpleWidget(title='Params', 
-                    background_color='lightgray',
-                    text_color='black')
+        self.params_area = ParamsWidget(title='Params')
+        self.params_area.changed.connect(self.params_changed)
 
         # Central Menu
         self.main_menu = SimpleWidget(title='Menu')
@@ -109,8 +114,6 @@ class MainWindow(QMainWindow):
 
     def open_image(self, imageName):
         self.image = cv2.imread(imageName, cv2.IMREAD_GRAYSCALE)
-        self.imageOrW = self.image.shape[1]     # width of the original image
-        self.imageOrH = self.image.shape[0]     # height of the original image
 
     def init_image(self, event):
         if event != '':
@@ -122,7 +125,50 @@ class MainWindow(QMainWindow):
         else:
             self.open_image(self.image_name)
             print(event)
-        self.image_area.set_image_from_array(self.image)
+        self.image_width = self.image.shape[1]
+        self.image_height = self.image.shape[0]
+        
+        self.image_slice.set_image(self.image)
+        self.refresh_image()
+        self.refresh_graph()
+    
+    def refresh_image(self):
+        try:
+            self.image_area.set_image_from_array(self.image)
+            max_v, max_ind = self.image_slice.find_max()
+            self.image_area.draw_h_line(max_ind)
+        except Exception as e:
+            print("Exception - refresh_image: " + str(e) + "")
+    
+    def refresh_graph(self):
+        y_list = []
+        x_lin = np.linspace(0, self.image_width-1, self.image_width)
+        max_v, max_ind = self.image_slice.find_max()
+        self.image_slice.set_position(max_ind)
+        self.image_slice.set_mean_size(20)
+        image_slice = self.image_slice.get_slice()
+        y_list.append(image_slice)
+        mean = self.image_slice.get_mean()
+        if mean.size != 0:
+            y_list.append(mean)
+        if self.simulation :
+            dist, diam, wale, pixw = self.params_area.get_data()
+            # X Axis
+            self.maxIntensityInd = 0
+            self.origin = 0
+            min_ax = (-(self.image_width)+self.maxIntensityInd+self.origin)/2*pixw*1e-6
+            max_ax = ((self.image_width)+self.maxIntensityInd+self.origin)/2*pixw*1e-6
+            x_axis = np.linspace(min_ax, max_ax, self.image_width)
+            # Process Airy Disc calculation
+            k = diam*1e-3/(dist*1e-2*wale*1e-9)
+            J = (2*j1(np.pi*k*x_axis)/(np.pi*k*x_axis))**2
+            # Arbitrary intensity - To change
+            simulated_disc = 255*J
+            y_list.append(simulated_disc)
+            print('simu')
+        self.graph_area.set_data(x_lin, y_list)
+        
+        
         '''
         self.processRatio()
         """ Resizing image """
@@ -150,6 +196,20 @@ class MainWindow(QMainWindow):
         """ Updating display of the image """
         self.updateImage()   
         '''
+    
+    def params_changed(self, event):
+        try:
+            if event == 'sliders':
+                print('Slide test')
+                if self.simulation:
+                    print('Simu OK')
+                self.refresh_graph()
+                
+            elif event == 'params': # all the parameters are good
+                self.simulation = True
+                self.refresh_graph()
+        except Exception as e:
+            print("Exception - params_changed: " + str(e) + "")
 
 # -------------------------------
 
