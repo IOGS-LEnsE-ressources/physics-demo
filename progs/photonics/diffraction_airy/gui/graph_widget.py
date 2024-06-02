@@ -83,10 +83,13 @@ class GraphWidget(QWidget):
         """ Displaying data """
         self.plot_area.clear()
         self.plot_area.setXRange(self.x_axis[0], self.x_axis[self.x_size-1], padding=0)
-        self.plot_area.setLabel('bottom', 'Position in m')
         for i, y_values in enumerate(self.y_axis):
             pen = mkPen(color=colors_list[i], width=pen_size_list[i])
             self.plot_area.plot(self.x_axis, y_values, pen=pen)
+    
+    def set_x_label(self, label):
+        """Update the label for X-Axis"""
+        self.plot_area.setLabel('bottom', label)
         
 #--------------
 # Example to test the Simple_Widget class

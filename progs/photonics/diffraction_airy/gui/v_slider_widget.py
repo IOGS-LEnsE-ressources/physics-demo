@@ -1,14 +1,21 @@
 # -*- coding: utf-8 -*-
-"""*widget_slider* file.
+"""
+VSlideWidget for LEnsE GUI Application
 
-*widget_slider* file that contains :class::WidgetSlider 
+---------------------------------------
+(c) 2024 - LEnsE - Institut d'Optique
+---------------------------------------
 
-.. module:: WidgetSlider
-   :synopsis: class to display a slider in PyQt6.
+Modifications
+-------------
+    Creation on 2024/06/02
 
-.. note:: LEnsE - Institut d'Optique - version 0.1
 
-.. moduleauthor:: Julien VILLEMEJANE <julien.villemejane@institutoptique.fr>
+Author : Julien VILLEMEJANE
+Laboratoire d Enseignement Experimental - Institut d Optique Graduate School
+Created on 02/jun/2024
+
+@author: julien.villemejane
 """
 
 import sys
@@ -57,10 +64,10 @@ def is_number(value, min_val=0, max_val=0):
         return False
 
 
-class SliderWidget(QWidget):
+class VSliderWidget(QWidget):
     """Create a Widget with a slider.
     
-    SliderWidget class to create a widget with a slider and its value.
+    VSliderWidget class to create a widget with a vertical slider and its value.
     Children of QWidget
 
     .. attribute:: name
@@ -101,7 +108,7 @@ class SliderWidget(QWidget):
     changed = pyqtSignal(str)
 
     def __init__(self, name="", percent: bool = False,
-                 integer: bool = False) -> None:
+                 integer: bool = False, inverted: bool = False) -> None:
         """Default constructor of the class.
         
         :param name: Name of the slider, defaults to "".
@@ -129,26 +136,24 @@ class SliderWidget(QWidget):
         self.main_layout = QGridLayout()
         ''' Graphical Objects '''
         self.name_label = QLabel(name)
-        self.user_value = QLineEdit()
         self.real_value_label = QLabel('')
-        self.slider = QSlider(Qt.Orientation.Horizontal)
+        self.slider = QSlider(Qt.Orientation.Vertical)
         self.slider.setMinimum(int(self.min_real_value * self.ratio_slider))
         self.slider.setMaximum(int(self.max_real_value * self.ratio_slider))
         self.slider.setValue(int(self.real_value * self.ratio_slider))
         self.units = ''
         self.units_label = QLabel('')
+        self.slider.setInvertedAppearance(inverted)
 
         # Adding graphical objects to the main layout 
+        self.main_layout.setRowStretch(0, 1)  
+        self.main_layout.setRowStretch(1, 5)  
+        self.main_layout.setRowStretch(2, 1)  
+        self.main_layout.setRowStretch(3, 1) 
         self.main_layout.addWidget(self.name_label, 0, 0)
-        self.main_layout.addWidget(self.user_value, 0, 1)
-        self.main_layout.addWidget(self.slider, 0, 2)
-        self.main_layout.addWidget(self.real_value_label, 0, 3)
-        self.main_layout.addWidget(self.units_label, 0, 4)
-        self.main_layout.setColumnStretch(0, 1) 
-        self.main_layout.setColumnStretch(1, 1) 
-        self.main_layout.setColumnStretch(2, 3) 
-        self.main_layout.setColumnStretch(3, 1) 
-        self.main_layout.setColumnStretch(4, 1)
+        self.main_layout.addWidget(self.slider, 1, 0)
+        self.main_layout.addWidget(self.real_value_label, 2, 0)
+        self.main_layout.addWidget(self.units_label, 3, 0)
         self.setLayout(self.main_layout)
 
         for i in range(self.main_layout.rowCount()):
@@ -159,7 +164,6 @@ class SliderWidget(QWidget):
         self.slider.valueChanged.connect(self.slider_changed)
         self.set_value(self.real_value)
         self.update_display()
-        self.update_GUI()
 
     def get_name(self):
         return self.name
@@ -174,52 +178,7 @@ class SliderWidget(QWidget):
     
     def set_slider_enabled(self, value):
         self.slider.setEnabled(value)
-
-    def update_GUI(self):
-        self.slider.setEnabled(self.enabled)
-        self.user_value.setEnabled(self.enabled)
-
-    def is_value(self) -> bool:
-        """
-        """
-        value = self.user_value.text()
-        value2 = value.replace('.', '', 1)
-        value2 = value2.replace('e', '', 1)
-        value2 = value2.replace('-', '', 1)
-        if value2.isdigit():
-            return True
-        else:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Icon.Warning)
-            msg.setText(f"Not a number")
-            msg.setWindowTitle("Not a Number Value")
-            msg.exec()
-            self.real_value = self.min_real_value
-            self.user_value.setText(str(self.real_value))
-            return False        
-
-    def update_value(self):
-        if self.is_value():
-            value = self.user_value.text()
-            self.real_value = float(value)
-            if self.integer:
-                self.real_value = int(self.real_value)
-            self.set_value(self.real_value)
-        
-        '''
-        # Test if value is between min and max
-        if not is_number(self.real_value, self.min_real_value, self.max_real_value):
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Icon.Warning)
-            msg.setText('This number is not in the good range')
-            msg.setWindowTitle("Outside Range")
-            msg.exec()
-            self.real_value = self.min_real_value
-            self.user_value.setText(str(self.real_value))
-            self.real_value = self.min_real_value
-        '''
-        self.update_display()
-        return True
+   
 
     def slider_changed(self, event):
         self.real_value = self.slider.value() / self.ratio_slider
@@ -279,7 +238,6 @@ class SliderWidget(QWidget):
 
     def set_value(self, value):
         self.real_value = value
-        self.user_value.setText(str(value))
         self.slider.setValue(int(self.real_value * self.ratio_slider))
 
     def set_ratio(self, value):
@@ -303,7 +261,7 @@ if __name__ == '__main__':
             self.central_widget = QWidget()
             self.layout = QVBoxLayout()
 
-            self.slider_widget = SliderWidget()
+            self.slider_widget = VSliderWidget()
             self.slider_widget.set_min_max_slider(20, 50)
             self.slider_widget.set_units('Hz')
             self.slider_widget.set_name('Slider to test')

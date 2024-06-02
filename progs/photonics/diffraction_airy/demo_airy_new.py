@@ -33,6 +33,7 @@ from gui.open_widget import OpenFileWidget
 from gui.graph_widget import GraphWidget
 from gui.image_widget import ImageWidget
 from gui.params_widget import ParamsWidget
+from gui.slice_params_widget import SliceParamsWidget
 from process.image_slice import ImageSlice
 from process.airy import AiryDisc
 
@@ -91,20 +92,21 @@ class MainWindow(QMainWindow):
         # Image Area
         self.image_area = ImageWidget(title='Image')
         self.graph_area = GraphWidget(title='Graphe')
-        self.camera_area = SimpleWidget(title='Camera', 
-                    background_color='gray',
-                    text_color='black')
+        self.graph_area.set_x_label('Position in pixel')
+        self.camera_area = SimpleWidget(title='Camera')
         self.params_area = ParamsWidget(title='Params')
         self.params_area.changed.connect(self.params_changed)
 
         # Central Menu
-        self.main_menu = SimpleWidget(title='Menu')
+        self.slice_params = SliceParamsWidget(title='Menu')
+        self.slice_params.changed.connect(self.params_changed)
+        self.slice_params.set_graph_position_enabled(False)
         self.open_file_area = OpenFileWidget(title='Open File')
         self.open_file_area.opened.connect(self.init_image)
 
         # Include graphical elements in the window application
         self.main_layout.addWidget(self.title_area, 0, 0, 1, 3)
-        self.main_layout.addWidget(self.main_menu, 1, 1)
+        self.main_layout.addWidget(self.slice_params, 1, 1)
         self.main_layout.addWidget(self.open_file_area, 2, 1)
         self.main_layout.addWidget(self.image_area, 1, 0)
         self.main_layout.addWidget(self.graph_area, 1, 2)
@@ -125,84 +127,78 @@ class MainWindow(QMainWindow):
             print('Default Image')
         else:
             self.open_image(self.image_name)
-            print(event)
         self.image_width = self.image.shape[1]
         self.image_height = self.image.shape[0]
         
         self.image_slice.set_image(self.image)
+        self.slice_params.position.set_min_max_slider(1, self.image_height)
+        
+        self.image_area.set_image_from_array(self.image)
+        max_v, max_ind = self.image_slice.find_max()
+        self.slice_params.set_position(max_ind-1)
+        delta_x = min(max_ind ,(self.image_height - max_ind))
+        self.slice_params.set_mean_size_min_max(0, delta_x)
+        self.slice_params.set_mean_size(0)
+        self.slice_params.set_graph_position_min_max(-self.image_width//2, +self.image_width//2)
+        self.slice_params.set_graph_position(0)
+        
+        
+        
         self.refresh_image()
         self.refresh_graph()
     
     def refresh_image(self):
         try:
-            self.image_area.set_image_from_array(self.image)
-            max_v, max_ind = self.image_slice.find_max()
-            self.image_area.draw_h_line(max_ind)
+            max_ind, mean_size, g_pos = self.slice_params.get_data()
+            # self.slice_params.set_mean_size(mean_size)
+            self.image_area.draw_h_line(max_ind-1, width=5)
+            self.image_area.draw_h_line(max_ind-1-mean_size)
+            self.image_area.draw_h_line(max_ind-1+mean_size)
         except Exception as e:
             print("Exception - refresh_image: " + str(e) + "")
     
     def refresh_graph(self):
         y_list = []
         x_lin = np.linspace(0, self.image_width-1, self.image_width)
-        max_v, max_ind = self.image_slice.find_max()
+        max_ind, mean_size, g_pos = self.slice_params.get_data()
         self.image_slice.set_position(max_ind)
-        self.image_slice.set_mean_size(20)
+        self.image_slice.set_mean_size(mean_size)
         image_slice = self.image_slice.get_slice()
         y_list.append(image_slice)
         mean = self.image_slice.get_mean()
+        x_axis_d = x_lin
         if mean.size != 0:
             y_list.append(mean)
         if self.simulation :
             dist, diam, wale, pixw = self.params_area.get_data()
             # X Axis
             self.maxIntensityInd = 0
-            self.origin = 0
-            min_ax = (-(self.image_width)+self.maxIntensityInd+self.origin)/2*pixw*1e-6
-            max_ax = ((self.image_width)+self.maxIntensityInd+self.origin)/2*pixw*1e-6
+            min_ax = (-(self.image_width)+self.maxIntensityInd-g_pos)/2*pixw*1e-6
+            max_ax = ((self.image_width)+self.maxIntensityInd-g_pos)/2*pixw*1e-6
             x_axis = np.linspace(min_ax, max_ax, self.image_width)
             
             # Arbitrary intensity - To change
             simulated_disc = 255*self.airy_simulation.get_j(x_axis, diam, dist, wale)
+            x_axis_d = x_axis*1e6 # Displayed axis
             y_list.append(simulated_disc)
-        self.graph_area.set_data(x_lin, y_list)
-        
-        
-        '''
-        self.processRatio()
-        """ Resizing image """
-        self.resizeDispImage()
-        """ Position Slider update """
-        self.positionSlider.setMaximum(self.imageOrH) # depending on the height of the image
-        self.positionSlider.setMinimum(1)
-        
-        """ Find Max intensity in gray image """
-        self.maxIntensity = np.max(self.image)
-        self.maxIntensityInd = np.argmax(self.image) // self.imageOrW 
-        """ Set position of the slider to the maximum intensity line"""
-        self.position = self.maxIntensityInd
-        self.positionValue.setText(f'{self.position} px')
-        self.positionSlider.setValue(self.maxIntensityInd)
-        """ Mean Slider update """
-        if((self.maxIntensityInd > self.maxMean) and (self.imageOrH-self.maxIntensityInd) > self.maxMean):
-            self.meanSlider.setMaximum(self.maxMean)
-        else:
-            value = np.minimum(self.maxIntensityInd, self.imageOrH-self.maxIntensityInd)
-            self.meanSlider.setMaximum(value)
-        self.mean = int(self.meanSlider.value())
-        self.meanValue.setText(f'{self.mean} px')
-        
-        """ Updating display of the image """
-        self.updateImage()   
-        '''
+            self.graph_area.set_x_label('Position in um')
+        self.graph_area.set_data(x_axis_d, y_list)
+
     
     def params_changed(self, event):
         try:
-            if event == 'sliders':
-                self.refresh_graph()
-                
-            elif event == 'params': # all the parameters are good
+            if event == 'params': # all the parameters are good
                 self.simulation = True
-                self.refresh_graph()
+                self.slice_params.set_graph_position_enabled(True)
+            print(event)
+            if event == 'slider:Position':
+                max_ind, mean_size, g_pos = self.slice_params.get_data()
+                delta_x = min(max_ind ,(self.image_height - max_ind))
+                print(f'D_x = {delta_x}')
+                self.slice_params.set_mean_size_min_max(0, delta_x-1)
+                self.slice_params.set_mean_size(mean_size)
+            self.refresh_image()
+            self.refresh_graph()
         except Exception as e:
             print("Exception - params_changed: " + str(e) + "")
 

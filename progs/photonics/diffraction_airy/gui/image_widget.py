@@ -18,8 +18,7 @@ Created on 01/jun/2024
 @author: julien.villemejane
 """
 
-
-# Graphical interface
+import numpy as np
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QPushButton, QGridLayout
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
@@ -42,13 +41,18 @@ class ImageWidget(WidgetImageDisplay):
         self.title = title
         self.background_color = background_color
         self.text_color = text_color
-        self.image_copy = self.image
+        self.image_copy = None
+        
+    def set_image_from_array(self, pixels: np.ndarray) -> None:
+        super().set_image_from_array(pixels)
+        self.image_copy = pixels.copy()
+        print(self.image_copy.shape)
     
     def init_image(self) -> None:
         """
         Reinit the image to the original one - without lines
         """
-        self.image = self.image_copy
+        self.image = self.image_copy.copy()
         self.resizeEvent(None)
     
     def draw_h_line(self, position: int, gray_color:int = 120, width: int = 2) -> None:
@@ -56,6 +60,7 @@ class ImageWidget(WidgetImageDisplay):
         Draw an horizontal line on the picture
         """        
         try:
+            self.init_image()
             self.image[position-width:position+width,:] = gray_color
             self.resizeEvent(None)
         
