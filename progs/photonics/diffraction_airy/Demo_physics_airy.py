@@ -9,10 +9,10 @@ Created on 18/mar/2023
 @author: julien.villemejane
 """
 
-from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
-from PyQt5.uic import loadUi
-from PyQt5.QtGui import QPixmap, QImage, QPainter, QDoubleValidator
-from PyQt5 import QtCore
+from PyQt6.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
+from PyQt6.uic import loadUi
+from PyQt6.QtGui import QPixmap, QImage, QPainter, QDoubleValidator
+from PyQt6 import QtCore
 import cv2
 
 import numpy as np
@@ -57,7 +57,7 @@ class MainWindow(QMainWindow):
         ''' Logo LEnsE '''
         imageSize = self.lense_logo.size()
         logo = QPixmap("./data/IOGS-LEnsE-logo.jpg")
-        logo = logo.scaled(imageSize.width(), imageSize.height(), QtCore.Qt.KeepAspectRatio)
+        logo = logo.scaled(imageSize.width(), imageSize.height(), QtCore.Qt.AspectRatioMode.KeepAspectRatio)
         self.lense_logo.setPixmap(logo)
                 
         """ Opening image """
@@ -192,7 +192,7 @@ class MainWindow(QMainWindow):
     def resizeDispImage(self):
         self.newDim = (self.imageWidth, self.imageHeight)
         self.image_res = cv2.resize(self.image, self.newDim)
-        self.pmap_res = QImage(self.image_res, self.imageWidth, self.imageHeight, self.imageWidth, QImage.Format_Grayscale8)     
+        self.pmap_res = QImage(self.image_res, self.imageWidth, self.imageHeight, self.imageWidth, QImage.Format.Format_Grayscale8)     
         self.pmap_res = QPixmap(self.pmap_res)
 
     def openImage(self, imageName):
@@ -258,7 +258,7 @@ class MainWindow(QMainWindow):
         self.simu_res = cv2.resize(self.zz3, newSimuDim)
 
 
-        self.pmap_simu_res = QImage(self.simu_res, simuWidth, simuHeight, simuWidth, QImage.Format_Grayscale8)     
+        self.pmap_simu_res = QImage(self.simu_res, simuWidth, simuHeight, simuWidth, QImage.Format.Format_Grayscale8)     
         self.pmap_simu_res = QPixmap(self.pmap_simu_res)
         
         """ Displaying image and line """
@@ -312,7 +312,7 @@ class MainWindow(QMainWindow):
             self.image_line[(self.position+self.mean)-2:(self.position+self.mean)+2,:] = 200
     
         self.image_res = cv2.resize(self.image_line, self.newDim)
-        self.pmap_res = QImage(self.image_res, self.imageWidth, self.imageHeight, self.imageWidth, QImage.Format_Grayscale8)     
+        self.pmap_res = QImage(self.image_res, self.imageWidth, self.imageHeight, self.imageWidth, QImage.Format.Format_Grayscale8)     
         self.pmap_res = QPixmap(self.pmap_res)
         
         """ Displaying image and line """
@@ -370,4 +370,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     main = MainWindow()
     main.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

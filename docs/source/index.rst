@@ -8,3 +8,10 @@ Physics demonstration
 
 .. warning::
    This application and its documentation website are still works in progress
+
+
+.. toctree::
+	:maxdepth: 2
+	:caption: Photonics
+	
+	Airy Disc<contents/photonics_airy>

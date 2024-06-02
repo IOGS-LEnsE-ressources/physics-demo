@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-TitleWidget for LEnsE GUI Application
+GraphWidget for LEnsE GUI Application
 
 ---------------------------------------
 (c) 2024 - LEnsE - Institut d'Optique
@@ -8,24 +8,27 @@ TitleWidget for LEnsE GUI Application
 
 Modifications
 -------------
-    Creation on 2024/06/01
+    Creation on 2024/06/02
 
 
 Author : Julien VILLEMEJANE
 Laboratoire d Enseignement Experimental - Institut d Optique Graduate School
-Created on 01/jun/2024
+Created on 02/jun/2024
 
 @author: julien.villemejane
 """
 
-
-# Graphical interface
+import numpy as np
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QPushButton, QGridLayout
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 
+from pyqtgraph import PlotWidget, plot, mkPen, PColorMeshItem
 
-class TitleWidget(QWidget):
+colors_list = [(128, 128, 0), (255, 0, 128), (128, 0, 255)]
+pen_size_list = [3, 2, 2]
+
+class GraphWidget(QWidget):
     """
     TitleWidget based on QWidget.
     Args:
@@ -40,6 +43,10 @@ class TitleWidget(QWidget):
         self.title = title
         self.background_color = background_color
         self.text_color = text_color
+        # Graph data
+        self.x_axis = np.array([])
+        self.y_axis = np.array([])
+        self.y_size = 0
         
         # Style of the widget - based on CSS
         style_css = "color: "+self.text_color+"; font: bold 20px;"
@@ -52,33 +59,34 @@ class TitleWidget(QWidget):
         # Create a self.layout and add widgets
         self.layout = QGridLayout()
         self.setLayout(self.layout)
-        self.layout.setColumnStretch(0, 7)
-        self.layout.setColumnStretch(1, 2)
-        self.layout.setRowStretch(0, 2) # Title
-        self.layout.setRowStretch(1, 1) # Subtitle
 
         # Graphical elements
-        self.title_label = QLabel(self.title)
-        style_css = "color: "+self.text_color+";"
-        self.title_label.setStyleSheet(style_css)
-        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.subtitle_label = QLabel('Developed by the LEnsE')
-        style_css = "color: "+self.text_color+"; font: italic 14px;"
-        self.subtitle_label.setStyleSheet(style_css)
-        self.subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.plot_area = PlotWidget()
+        self.layout.addWidget(self.plot_area)
+        self.plot_area.setBackground('w')
+        self.plot_area.setYRange(0, 255, padding=0)
+        # self.plot_area.setXRange(0, self.imageOrW-1, padding=0)
+        self.plot_area.setLabel('bottom', 'Position in px')
 
         # row = 0
-        self.layout.addWidget(self.title_label, 0, 0) 
-        self.layout.addWidget(self.subtitle_label, 1, 0) 
-        
-        # Logo LEnsE
-        self.lense_logo = QLabel()
-        logo = QPixmap("./data/IOGS-LEnsE-logo_small.jpg")
-        # logo = logo_.scaled(imageSize.width()//4, imageSize.height()//4, Qt.AspectRatioMode.KeepAspectRatio)
-        self.lense_logo.setPixmap(logo)
-        self.lense_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        self.layout.addWidget(self.lense_logo, 0, 1, 2, 1) 
+        self.layout.addWidget(self.plot_area, 0, 0) 
+
+    def set_data(self, x_axis: np.ndarray, y_axis: list[np.ndarray]) -> None:
+        '''
+        '''
+        self.x_axis = x_axis
+        self.y_axis = y_axis
+        self.x_size = len(self.x_axis)
+        self.refresh_graph()
+
+    def refresh_graph(self):
+        """ Displaying data """
+        self.plot_area.clear()
+        self.plot_area.setXRange(self.x_axis[0], self.x_axis[self.x_size-1], padding=0)
+        self.plot_area.setLabel('bottom', 'Position in m')
+        for i, y_values in enumerate(self.y_axis):
+            pen = mkPen(color=colors_list[i], width=pen_size_list[i])
+            self.plot_area.plot(self.x_axis, y_values, pen=pen)
         
 #--------------
 # Example to test the Simple_Widget class

@@ -22,7 +22,7 @@ Created on 01/jun/2024
 
 # Libraries to import
 import sys
-
+import numpy as np
 from PyQt6.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget
 from PyQt6.QtGui import QIcon
 import cv2
@@ -30,7 +30,8 @@ import cv2
 from gui.simple_widget import SimpleWidget
 from gui.title_widget import TitleWidget
 from gui.open_widget import OpenFileWidget
-from lensepy.pyqt6.widget_image_display import WidgetImageDisplay
+from gui.graph_widget import GraphWidget
+from gui.image_widget import ImageWidget
 
 
 # -------------------------------
@@ -68,7 +69,7 @@ class MainWindow(QMainWindow):
         # Row of size 1 / 2 of the height
         self.main_layout.setRowStretch(0, 1) # Title
         self.main_layout.setRowStretch(1, 10) # Main
-        self.main_layout.setRowStretch(2, 5) # Params
+        self.main_layout.setRowStretch(2, 3) # Params
         
         self.main_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.main_widget)
@@ -77,10 +78,12 @@ class MainWindow(QMainWindow):
         self.title_area =  TitleWidget(title='Airy Disc / Demonstration')
         
         # Image Area
-        self.image_area = WidgetImageDisplay()
-        self.graph_area = SimpleWidget(title='Graphe', 
-                    background_color='gray',
-                    text_color='white')
+        self.image_area = ImageWidget(title='Image')
+        self.graph_area = GraphWidget(title='Graphe')
+        x_lin = np.linspace(0, 100, 101)
+        y1_lin = 50*(np.sin(x_lin)+1.5)
+        y2_lin = 20*(np.sin(x_lin)+2.5)
+        self.graph_area.set_data(x_lin, [y1_lin, y2_lin])
         self.camera_area = SimpleWidget(title='Camera', 
                     background_color='gray',
                     text_color='black')
